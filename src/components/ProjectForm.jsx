@@ -9,7 +9,8 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import FilePondPluginImageEdit from 'filepond-plugin-image-edit';
 import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.css';
-import { createProject } from '../api/api';
+// import { createProject } from '../api/api'; // Commented out as it's not used
+
 // Register the plugins
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview, FilePondPluginImageEdit);
 
