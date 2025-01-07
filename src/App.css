@@ -1,3 +1,28 @@
+body {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.toggle-dark-mode {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #4a5568;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.toggle-dark-mode:hover {
+  background-color: #2d3748;
+}
+
 .App {
   text-align: center;
 }
