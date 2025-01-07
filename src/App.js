@@ -8,7 +8,7 @@ import './App.css';
 // const API_URL = process.env.REACT_APP_API_URL; // Commented out as it's not used
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  // const [darkMode, setDarkMode] = useState(false);
 
   // const toggleDarkMode = () => { // Commented out as it's not used
   //   setDarkMode(!darkMode);
