@@ -1,13 +1,30 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Welcome = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/project-form");
+    }, 4500); // 4.5 seconds
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
   return (
-    <div className="h-screen bg-white flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold mb-4">Welcome to the Home of Projects</h1>
-      <Link to="/project-form" className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-        Go to Project Form
-      </Link>
+    <div className="h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-500 to-purple-600 dark:from-gray-800 dark:to-gray-900 text-white">
+        <div className="flex justify-center items-center">
+    <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+  </div>
+      <div className="text-center px-6">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to Home Of Projects</h1>
+        <p className="text-lg md:text-xl mb-10">Boost your audiance & reachability through broadcasting to the Channel</p>
+      </div>
+
+      <div className="absolute bottom-0 w-full text-center py-4 text-sm bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10 backdrop-blur-lg">
+        <p>&copy; {new Date().getFullYear()} Your Data will be sent to the Channel</p>
+      </div>
     </div>
   );
 };

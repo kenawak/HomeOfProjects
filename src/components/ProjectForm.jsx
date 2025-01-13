@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import axios from 'axios';
+import { createProject } from '../api/api';
 import { FilePond, registerPlugin } from 'react-filepond';
 import 'filepond/dist/filepond.min.css';
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
@@ -9,7 +10,7 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import FilePondPluginImageEdit from 'filepond-plugin-image-edit';
 import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.css';
-// import { createProject } from '../api/api'; // Commented out as it's not used
+import Message from './Message';
 
 // Register the plugins
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview, FilePondPluginImageEdit);
@@ -17,17 +18,29 @@ registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview, F
 const validationSchema = yup.object({
   projectName: yup.string().required('Project name is required'),
   projectDescription: yup.string().required('Project description is required'),
-  telegramLink: yup.string().url('Invalid Telegram link').required('Telegram link is required'),
-  linkedinProfile: yup.string().url('Invalid LinkedIn profile link').required('LinkedIn profile link is required'),
-  twitterAccount: yup.string().url('Invalid Twitter account link').required('Twitter account link is required'),
-  githubLink: yup.string().url('Invalid GitHub link').optional(),
-  liveLink: yup.string().url('Invalid live project link').optional(),
+  linkedinProfile: yup.string().url('Invalid LinkedIn profile link').optional(),
+  twitterAccount: yup
+    .string()
+    .matches(/^@/, 'Twitter username must start with @')
+    .required('Twitter username is required'),
+  githubLink: yup
+    .string()
+    .matches(/^github\.com\/.+/, 'GitHub link must start with github.com/')
+    .optional(),
+  liveLink: yup
+    .string()
+    .matches(/^https?:\/\/.+/, 'Live project link must be a valid URL')
+    .optional(),
 });
-
+const Loader = () => (
+  <div className="flex justify-center items-center">
+    <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div>
+  </div>
+);
 const Uploader = ({ setFieldValue }) => {
   const [files, setFiles] = useState([]);
 
-  const handleDownload = (file) => {
+  const handleUpload = (file) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const link = document.createElement('a');
@@ -45,38 +58,33 @@ const Uploader = ({ setFieldValue }) => {
       <FilePond
         files={files}
         onupdatefiles={(fileItems) => {
-          setFiles(fileItems.map(fileItem => fileItem.file));
-          setFieldValue('files', fileItems.map(fileItem => fileItem.file));
+          const updatedFiles = fileItems.map(fileItem => fileItem.file);
+          setFiles(updatedFiles);
+          setFieldValue('files', updatedFiles);
         }}
         allowMultiple={true}
         maxFiles={3}
-        acceptedFileTypes={['image/*']} // Accept only images
-        name="files" /* sets the file input name, it's filepond by default */
+        acceptedFileTypes={['image/*']}
+        name="files"
         labelIdle='Drag & Drop your images or <span class="filepond--label-action">Browse</span>'
-        action='/'
-        imageEditEditor={false}        
+        onprocessfile={(error, file) => {
+          if (!error) {
+            handleUpload(file.file);
+          }
+        }}
       />
-      {files.map((file, index) => (
-        <button
-          key={index}
-          onClick={() => handleDownload(file)}
-          className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-lg mt-2"
-        >
-          Download {file.name}
-        </button>
-      ))}
     </div>
   );
 };
 
 const ProjectForm = () => {
   const [useGithubData, setUseGithubData] = useState(false);
+  const [status, setStatus] = useState(null);
 
   const formik = useFormik({
     initialValues: {
       projectName: '',
       projectDescription: '',
-      telegramLink: '',
       linkedinProfile: '',
       twitterAccount: '',
       githubLink: '',
@@ -86,9 +94,13 @@ const ProjectForm = () => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
-        const response = await axios.post(process.env.API_URL, values);
+        console.log("sending....")
+        setStatus({ type: 'loading', message: 'Sending data...' });
+        const response = await createProject(values);
         console.log('Form submitted', response.data);
+        setStatus({ type: 'success', message: 'Data sent successfully' });
       } catch (error) {
+        setStatus({ type: 'error', message: 'Error `sen`ding data' });
         console.error('Error submitting form', error);
       }
     },
@@ -99,16 +111,20 @@ const ProjectForm = () => {
     if (e.target.checked && formik.values.githubLink) {
       try {
         const githubResponse = await axios.get(`https://api.github.com/repos/${formik.values.githubLink}`);
+        setStatus({ type: 'loading', message: 'Setting github data..' });
         formik.setFieldValue('projectDescription', githubResponse.data.description);
         formik.setFieldValue('projectName', githubResponse.data.title);
+        setStatus({ type: 'success', message: 'GitHub data set successfully' });
       } catch (error) {
         console.error('Error fetching GitHub data', error);
+        setStatus({ type: 'error', message: 'Error fetching GitHub data' });
       }
     }
   };
 
   return (
-    <div className="h-screen bg-white rounded-lg shadow sm:max-w-md sm:w-full sm:mx-auto sm:overflow-hidden lg:overflow-visible">
+    <div className="h-auto bg-white rounded-lg shadow sm:max-w-md sm:w-full sm:mx-auto sm:overflow-hidden lg:overflow-visible">
+
       <div className="px-4 py-8 sm:px-10">
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
@@ -120,15 +136,16 @@ const ProjectForm = () => {
         </div>
         <form onSubmit={formik.handleSubmit} className="mt-6">
           <div className="w-full space-y-6">
-            {!useGithubData && (
+          {!useGithubData && (
               <>
-                <div className="w-full">
-                  <div className="relative">
+              <div className="w-full">
+                <label htmlFor="project-name" className="block text-gray-700">Project Name</label>
+                <div className="relative">
                     <input
                       type="text"
                       id="project-name"
                       name="projectName"
-                      className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                      className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                       placeholder="Project Name"
                       value={formik.values.projectName}
                       onChange={formik.handleChange}
@@ -140,11 +157,12 @@ const ProjectForm = () => {
                   </div>
                 </div>
                 <div className="w-full">
+                  <label htmlFor="project-description" className="block text-gray-700">Project Description</label>
                   <div className="relative">
                     <textarea
                       id="project-description"
                       name="projectDescription"
-                      className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                      className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                       placeholder="Describe your project"
                       value={formik.values.projectDescription}
                       onChange={formik.handleChange}
@@ -154,9 +172,10 @@ const ProjectForm = () => {
                       <p className="text-red-500 text-xs mt-1">{formik.errors.projectDescription}</p>
                     )}
                   </div>
-                </div>
+              </div>
               </>
             )}
+       
             <div className="flex items-center space-x-2">
               <input
                 id="use-github-data"
@@ -170,63 +189,13 @@ const ProjectForm = () => {
               </label>
             </div>
             <div className="w-full">
-              <div className="relative">
-                <input
-                  type="text"
-                  id="telegram-link"
-                  name="telegramLink"
-                  className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                  placeholder="Your Telegram Link"
-                  value={formik.values.telegramLink}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                {formik.touched.telegramLink && formik.errors.telegramLink && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.telegramLink}</p>
-                )}
-              </div>
-            </div>
-            <div className="w-full">
-              <div className="relative">
-                <input
-                  type="text"
-                  id="linkedin-profile"
-                  name="linkedinProfile"
-                  className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                  placeholder="Your LinkedIn Profile"
-                  value={formik.values.linkedinProfile}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                {formik.touched.linkedinProfile && formik.errors.linkedinProfile && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.linkedinProfile}</p>
-                )}
-              </div>
-            </div>
-            <div className="w-full">
-              <div className="relative">
-                <input
-                  type="text"
-                  id="twitter-account"
-                  name="twitterAccount"
-                  className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                  placeholder="Your X/Twitter account"
-                  value={formik.values.twitterAccount}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                {formik.touched.twitterAccount && formik.errors.twitterAccount && (
-                  <p className="text-red-500 text-xs mt-1">{formik.errors.twitterAccount}</p>
-                )}
-              </div>
-            </div>
-            <div className="w-full">
+              <label htmlFor="github-link" className="block text-gray-700">GitHub Link (optional)</label>
               <div className="relative">
                 <input
                   type="text"
                   id="github-link"
                   name="githubLink"
-                  className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                   placeholder="Your GitHub Link (optional)"
                   value={formik.values.githubLink}
                   onChange={formik.handleChange}
@@ -238,12 +207,13 @@ const ProjectForm = () => {
               </div>
             </div>
             <div className="w-full">
+              <label htmlFor="live-link" className="block text-gray-700">Live Project Link (optional)</label>
               <div className="relative">
                 <input
                   type="text"
                   id="live-link"
                   name="liveLink"
-                  className="rounded-lg border-transparent flex-1 appearance-none border border-gray-300 w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                   placeholder="Your Live Project Link (optional)"
                   value={formik.values.liveLink}
                   onChange={formik.handleChange}
@@ -254,6 +224,42 @@ const ProjectForm = () => {
                 )}
               </div>
             </div>
+            <div className="w-full">
+              <label htmlFor="linkedin-profile" className="block text-gray-700">LinkedIn Profile</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="linkedin-profile"
+                  name="linkedinProfile"
+                  className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Your LinkedIn Profile"
+                  value={formik.values.linkedinProfile}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                {formik.touched.linkedinProfile && formik.errors.linkedinProfile && (
+                  <p className="text-red-500 text-xs mt-1">{formik.errors.linkedinProfile}</p>
+                )}
+              </div>
+            </div>
+            <div className="w-full">
+              <label htmlFor="twitter-account" className="block text-gray-700">X/Twitter Account</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="twitter-account"
+                  name="twitterAccount"
+                  className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Your X/Twitter account"
+                  value={formik.values.twitterAccount}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                {formik.touched.twitterAccount && formik.errors.twitterAccount && (
+                  <p className="text-red-500 text-xs mt-1">{formik.errors.twitterAccount}</p>
+                )}
+              </div>
+            </div>
             <Uploader setFieldValue={formik.setFieldValue} />
             <div>
               <span className="block w-full rounded-md shadow-sm">
@@ -261,18 +267,16 @@ const ProjectForm = () => {
                   type="submit"
                   className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white w-full transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-lg"
                 >
-                  Send
+                  Upload My Project
                 </button>
               </span>
             </div>
           </div>
         </form>
       </div>
-      <div className="px-4 py-6 border-t-2 border-gray-200 bg-gray-50 sm:px-10">
-        <p className="text-xs leading-5 text-gray-500">
-          This data will be sent to the Channel
-        </p>
-      </div>
+      {status && status.type === 'loading' && <Loader />}
+      {status && status.type !== 'loading' && <Message type={status.type} message={status.message} />}
+
     </div>
   );
 };
