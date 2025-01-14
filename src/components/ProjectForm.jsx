@@ -23,7 +23,11 @@ const validationSchema = yup.object({
     .string()
     .matches(/^@/, 'Twitter username must start with @')
     .required('Twitter username is required'),
-  githubLink: yup
+    telegramUsername: yup
+    .string()
+    .matches(/^@/, '@john_doe')
+    .required('Telegram username is required'),
+    githubLink: yup
     .string()
     .matches(/https:\/\/github\.com\/.+/, 'Input a valid github link/')
     .optional(),
@@ -87,6 +91,7 @@ const ProjectForm = () => {
       projectDescription: '',
       linkedinProfile: '',
       twitterAccount: '',
+      telegramUsername: '',
       githubLink: '',
       liveLink: '',
       files: [],
@@ -273,6 +278,24 @@ const ProjectForm = () => {
                 />
                 {formik.touched.twitterAccount && formik.errors.twitterAccount && (
                   <p className="text-red-500 text-xs mt-1">{formik.errors.twitterAccount}</p>
+                )}
+              </div>
+            </div>
+            <div className="w-full">
+              <label htmlFor="telegram-username" className="block text-gray-700">Telegram Account</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="telegram-username"
+                  name="telegramUsername"
+                  className="rounded-lg border border-gray-300 flex-1 appearance-none w-full py-2 px-4 bg-white text-gray-700 placeholder-gray-400 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Your Telegram Username"
+                  value={formik.values.telegramUsername}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                {formik.touched.telegramUsername && formik.errors.telegramUsername && (
+                  <p className="text-red-500 text-xs mt-1">{formik.errors.telegramUsername}</p>
                 )}
               </div>
             </div>
