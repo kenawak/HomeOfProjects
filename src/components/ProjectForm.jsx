@@ -25,7 +25,7 @@ const validationSchema = yup.object({
     .required('Twitter username is required'),
   githubLink: yup
     .string()
-    .matches(/^github\.com\/.+/, 'GitHub link must start with github.com/')
+    .matches(/https:\/\/github\.com\/.+/, 'Input a valid github link/')
     .optional(),
   liveLink: yup
     .string()
@@ -110,11 +110,27 @@ const ProjectForm = () => {
     setUseGithubData(e.target.checked);
     if (e.target.checked && formik.values.githubLink) {
       try {
-        const githubResponse = await axios.get(`https://api.github.com/repos/${formik.values.githubLink}`);
-        setStatus({ type: 'loading', message: 'Setting github data..' });
-        formik.setFieldValue('projectDescription', githubResponse.data.description);
-        formik.setFieldValue('projectName', githubResponse.data.title);
-        setStatus({ type: 'success', message: 'GitHub data set successfully' });
+        const githubUrl = formik.values.githubLink; // User-provided GitHub URL
+
+    // Validate and parse the GitHub URL
+    const match = githubUrl.match(/https:\/\/github\.com\/repos\/([^\/]+)\/([^\/]+)/);
+    if (!match) {
+        setStatus({ type: 'error', message: 'Invalid GitHub URL. Please provide a valid repository link.' });
+        return;
+    }
+
+    const username = match[1]; // Extracted username
+    console.log(username)
+    const repoName = match[2]; // Extracted repository name
+    console.log(repoName)
+    // Fetch repository details from the GitHub API
+    setStatus({ type: 'loading', message: 'Fetching GitHub data...' });
+    const githubResponse = await axios.get(`https://api.github.com/repos/${username}/${repoName}`);
+    console.log('GitHub data', githubResponse.data);
+    // Update form fields with fetched data
+    formik.setFieldValue('projectDescription', githubResponse.data.description || 'No description available');
+    formik.setFieldValue('projectName', githubResponse.data.name || 'No name available');
+    setStatus({ type: 'success', message: 'GitHub data set successfully' });
       } catch (error) {
         console.error('Error fetching GitHub data', error);
         setStatus({ type: 'error', message: 'Error fetching GitHub data' });

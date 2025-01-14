@@ -21,10 +21,6 @@ const Welcome = () => {
         <h1 className="text-4xl md:text-6xl font-bold mb-6">Welcome to Home Of Projects</h1>
         <p className="text-lg md:text-xl mb-10">Boost your audiance & reachability through broadcasting to the Channel</p>
       </div>
-
-      <div className="absolute bottom-0 w-full text-center py-4 text-sm bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10 backdrop-blur-lg">
-        <p>&copy; {new Date().getFullYear()} Your Data will be sent to the Channel</p>
-      </div>
     </div>
   );
 };
