@@ -18,14 +18,9 @@ const convertFilesToBase64 = (files) => {
 
 export const createProject = async (project) => {
     console.log(project);
-    try {
-        console.log("Converting files to base64...");
-        project.files = await convertFilesToBase64(project.files);
-        console.log("Sending data....");
-        const response = await axios.post(url, project);
-        return response.data;
-    } catch (error) {
-        console.log(error.message);
-        return error.message;
-    }
+    console.log("Converting files to base64...");
+    project.files = await convertFilesToBase64(project.files);
+    console.log("Sending data....");
+    const response = await axios.post(url, project);
+    return response.data;
 };

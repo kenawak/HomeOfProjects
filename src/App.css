@@ -1,10 +1,10 @@
 body {
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.4s, color 0.4s;
 }
 
 body.dark {
-  background-color: #121212;
-  color: #ffffff;
+  background-color: #333333;
+  color: #fff;
 }
 
 .toggle-dark-mode {
@@ -60,4 +60,33 @@ body.dark {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Add dark mode styles for components */
+.dark .bg-white {
+  background-color: #1a202c;
+}
+
+.dark .text-gray-700 {
+  color: #e2e8f0;
+}
+
+.dark .border-gray-300 {
+  border-color: #4a5568;
+}
+
+.dark .placeholder-gray-400 {
+  color: #a0aec0;
+}
+
+.dark .text-gray-500 {
+  color: #a0aec0;
+}
+
+.dark .border-gray-200 {
+  border-color: #2d3748;
+}
+
+.dark .bg-gray-50 {
+  background-color: #2d3748;
 }

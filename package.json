@@ -17,6 +17,7 @@
     "filepond-plugin-image-resize": "^2.0.10",
     "filepond-plugin-image-transform": "^3.8.7",
     "formik": "^2.4.6",
+    "lucide-react": "^0.473.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-filepond": "^7.1.3",
