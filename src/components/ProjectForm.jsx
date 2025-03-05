@@ -11,7 +11,6 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import FilePondPluginImageEdit from 'filepond-plugin-image-edit';
 import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.css';
 import Message from './Message';
-import ThemeToggleSwitch from './ThemeToggleSwitch';
 
 // Register the plugins
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview, FilePondPluginImageEdit);
@@ -68,10 +67,10 @@ const Uploader = ({ setFieldValue }) => {
           setFieldValue('files', updatedFiles);
         }}
         allowMultiple={true}
-        maxFiles={5}
-        acceptedFileTypes={['image/*', 'video/*']}
+        maxFiles={3}
+        acceptedFileTypes={['image/*']}
         name="files"
-        labelIdle='Drag & Drop your images or videos or <span class="filepond--label-action">Browse</span>'
+        labelIdle='Drag & Drop your images or <span class="filepond--label-action">Browse</span>'
         onprocessfile={(error, file) => {
           if (!error) {
             handleUpload(file.file);
@@ -102,13 +101,11 @@ const ProjectForm = () => {
       try {
         console.log("sending....")
         setStatus({ type: 'loading', message: 'Sending data...' });
-        const res = await createProject(values);
-        console.log(res)
+        const response = await createProject(values);
+        console.log('Form submitted', response.data);
         setStatus({ type: 'success', message: 'Data sent successfully' });
-    } catch (error) {
-        setStatus({ type: 'error', message: 
-          error.message.includes("Blob") ? `${error.message} Or consider ReUploading` : `${error.message}` 
-        });
+      } catch (error) {
+        setStatus({ type: 'error', message: 'Error `sen`ding data' });
         console.error('Error submitting form', error);
       }
     },
@@ -148,8 +145,8 @@ const ProjectForm = () => {
 
   return (
     <div className="h-auto bg-white rounded-lg shadow sm:max-w-md sm:w-full sm:mx-auto sm:overflow-hidden lg:overflow-visible">
-      <div className="relative px-4 py-8 sm:px-10">
-        <ThemeToggleSwitch />
+
+      <div className="px-4 py-8 sm:px-10">
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -318,6 +315,7 @@ const ProjectForm = () => {
       </div>
       {status && status.type === 'loading' && <Loader />}
       {status && status.type !== 'loading' && <Message type={status.type} message={status.message} />}
+
     </div>
   );
 };
